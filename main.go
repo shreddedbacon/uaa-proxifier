@@ -1,10 +1,10 @@
 package main
 
 import (
-	"os"
-	"net/http"
-	"log"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -17,6 +17,14 @@ func main() {
 	if uaaUrl == "" {
 		fatal("You have to set the env var UAA_URL")
 	}
+	sslCert := os.Getenv("PROXY_SSL_CERT")
+	if sslCert == "" {
+		fatal("You have to set the env var PROXY_SSL_CERT")
+	}
+	sslKey := os.Getenv("PROXY_SSL_KEY")
+	if uaaUrl == "" {
+		fatal("You have to set the env var PROXY_SSL_KEY")
+	}
 	skipInsecure := false
 	if os.Getenv("SKIP_INSECURE") != "" {
 		tempInsecure, err := strconv.ParseBool(os.Getenv("SKIP_INSECURE"))
@@ -27,8 +35,9 @@ func main() {
 	proxy := NewCustomProxy(uaaUrl, skipInsecure)
 
 	http.HandleFunc("/", proxy.handle)
-	log.Fatal(http.ListenAndServe(":" + port, nil))
+	log.Fatal(http.ListenAndServeTLS(":"+port, sslCert, sslKey, nil))
 }
+
 func fatalIf(doing string, err error) {
 	if err != nil {
 		fatal(doing + ": " + err.Error())
